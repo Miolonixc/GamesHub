@@ -1,0 +1,10 @@
+.pong-wrapper { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 8px; }
+.pong-scores { display: flex; align-items: center; gap: 12px; font-size: 1rem; font-weight: 600; }
+.pong-score { font-size: 1.8rem; color: #dfe6e9; min-width: 30px; text-align: center; }
+.pong-dash { color: #636e72; }
+#pongMyName { color: #6c5ce7; }
+#pongOppName { color: #00cec9; }
+.pong-wrapper canvas { border: 2px solid #2d2d5a; border-radius: 6px; display: block; }
+.pong-controls { display: flex; gap: 20px; margin-top: 8px; }
+.pong-controls .dpad-btn { width: 64px; height: 64px; font-size: 1.6rem; }
+@media (max-width: 500px) { .pong-scores { font-size: 0.85rem; } .pong-score { font-size: 1.4rem; } .pong-controls .dpad-btn { width: 56px; height: 56px; } }
