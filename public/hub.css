@@ -293,7 +293,8 @@ input[type="text"]:focus { border-color: var(--primary); }
   padding: 8px 0; margin-bottom: 10px;
 }
 
-#gameTitle { font-size: 1.1rem; font-weight: 600; }
+#gameTitle { font-size: 1.1rem; font-weight: 600; flex: 1; }
+.mute-btn { margin-left: auto; font-size: 1.1rem; }
 
 #gameContainer {
   flex: 1;

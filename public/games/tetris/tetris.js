@@ -96,11 +96,11 @@ function create_tetris(opts) {
   function keyHandler(e) {
     if (!mode) return;
     switch (e.key) {
-      case "ArrowLeft": send({ type: "game-action", action: "left" }); e.preventDefault(); break;
-      case "ArrowRight": send({ type: "game-action", action: "right" }); e.preventDefault(); break;
-      case "ArrowUp": send({ type: "game-action", action: "rotate" }); e.preventDefault(); break;
+      case "ArrowLeft": send({ type: "game-action", action: "left" }); sfx.move(); e.preventDefault(); break;
+      case "ArrowRight": send({ type: "game-action", action: "right" }); sfx.move(); e.preventDefault(); break;
+      case "ArrowUp": send({ type: "game-action", action: "rotate" }); sfx.move(); e.preventDefault(); break;
       case "ArrowDown": send({ type: "game-action", action: "softDrop" }); e.preventDefault(); break;
-      case " ": send({ type: "game-action", action: "drop" }); e.preventDefault(); break;
+      case " ": send({ type: "game-action", action: "drop" }); sfx.drop(); e.preventDefault(); break;
     }
   }
 
@@ -151,6 +151,13 @@ function create_tetris(opts) {
     document.getElementById("tScore").textContent = state.score;
     document.getElementById("tLines").textContent = state.lines;
     document.getElementById("tLevel").textContent = state.level;
+
+    // Line clear sound
+    if (lastState && state.lines > lastState.lines) {
+      const diff = state.lines - lastState.lines;
+      if (diff >= 4) sfx.tetris();
+      else sfx.clear();
+    }
 
     if (state.mode === "coop") {
       document.getElementById("tTurnLabel").textContent = `Ход: ${state.currentPlayerName}`;

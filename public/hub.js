@@ -295,6 +295,12 @@
     document.body.appendChild(script);
   }
 
+  // --- Mute button ---
+  $("#muteBtn").onclick = () => {
+    const on = sfx.toggle();
+    $("#muteBtn").textContent = on ? "🔊" : "🔇";
+  };
+
   // --- Back to menu ---
   $("#backToMenu").onclick = () => {
     if (gameInstance && gameInstance.destroy) gameInstance.destroy();

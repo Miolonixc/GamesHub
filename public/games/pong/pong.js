@@ -25,6 +25,7 @@ function create_pong(opts) {
       </div>
     </div>`;
   const canvas = document.getElementById("pongCanvas"); const ctx = canvas.getContext("2d");
+  let lastPongScore = null;
   function resize() { const s = Math.min((window.innerWidth - 40) / 600, (window.innerHeight - 200) / 400, 1); canvas.width = 600 * s; canvas.height = 400 * s; ctx.setTransform(s, 0, 0, s, 0, 0); }
   resize(); window.addEventListener("resize", resize);
 
@@ -47,6 +48,13 @@ function create_pong(opts) {
   document.addEventListener("keydown", keyHandler);
   document.getElementById("pongOverlayBtn").onclick = () => document.getElementById("pongOverlay").classList.add("hidden");
   function onState(s) {
+    // Score change sound
+    if (lastPongScore !== undefined) {
+      if (s.myScore > lastPongScore.my) sfx.score();
+      if (s.opponentScore > lastPongScore.opp) sfx.lose();
+    }
+    lastPongScore = { my: s.myScore, opp: s.opponentScore };
+
     ctx.fillStyle = "#0a0a1a"; ctx.fillRect(0, 0, 600, 400);
     ctx.setLineDash([8, 8]); ctx.strokeStyle = "#2d2d5a"; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(300, 0); ctx.lineTo(300, 400); ctx.stroke(); ctx.setLineDash([]);

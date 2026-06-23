@@ -22,7 +22,7 @@ function create_connect4(opts) {
   } else {
     document.getElementById("c4Exit").onclick = () => document.getElementById("backToMenu").click();
   }
-  document.querySelectorAll(".c4-col-btn").forEach(b => b.onclick = () => send({ type: "game-action", action: "drop", data: { col: parseInt(b.dataset.col) } }));
+  document.querySelectorAll(".c4-col-btn").forEach(b => b.onclick = () => { send({ type: "game-action", action: "drop", data: { col: parseInt(b.dataset.col) } }); sfx.drop(); });
   function onState(s) {
     const board = document.getElementById("c4Board"); board.innerHTML = "";
     for (let r = 0; r < s.rows; r++) for (let c = 0; c < s.cols; c++) {

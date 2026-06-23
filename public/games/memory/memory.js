@@ -26,7 +26,7 @@ function create_memory(opts) {
       if (c.matched) d.classList.add("mem-matched");
       d.textContent = c.emoji || "?";
       if (c.emoji) d.classList.add("mem-flipped");
-      d.onclick = () => send({ type: "game-action", action: "flip", data: { idx: c.id } });
+      d.onclick = () => { send({ type: "game-action", action: "flip", data: { idx: c.id } }); sfx.place(); };
       board.appendChild(d);
     });
     document.getElementById("memMyScore").textContent = s.myScore;

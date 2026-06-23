@@ -94,6 +94,10 @@ wss.on("connection", (ws) => {
           if (!game || !gameModules[game]) return;
           room.game = game;
           room.proposedGame = null;
+          const gameModule = gameModules[game];
+          if (gameModule && gameModule.init) {
+            room.state = gameModule.init(room);
+          }
           room.players.forEach(p => {
             const c = clients.get(p.id);
             if (c && c.ws.readyState === 1) {

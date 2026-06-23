@@ -41,8 +41,10 @@ function create_checkers(opts) {
     const piece = board[r][c];
     if (piece === 1 || piece === 3) {
       selected = { r, c };
+      sfx.move();
       highlightMoves(board, r, c);
     } else if (selected && piece === 0) {
+      sfx.capture();
       send({ type: "game-action", action: "move", data: { fromR: selected.r, fromC: selected.c, toR: r, toC: c } });
       selected = null;
     }

@@ -51,12 +51,28 @@ function create_seabattle(opts) {
     document.getElementById("sbReady").style.display = "none";
   };
 
+  // Auto-ready since ships are auto-placed
+  setTimeout(() => {
+    send({ type: "game-action", action: "sb-ready" });
+    document.getElementById("sbReady").style.display = "none";
+  }, 500);
+
+  let lastShotCount = 0;
   function onState(s) {
     const phase = document.getElementById("sbPhase");
     if (s.phase === "placing") {
       phase.textContent = "Ожидание готовности...";
       return;
     }
+
+    // Shot sound
+    if (s.myShots.length > lastShotCount) {
+      const last = s.myShots[s.myShots.length - 1];
+      if (s.enemyGrid[last[0]][last[1]] === 2) sfx.hit();
+      else sfx.miss();
+    }
+    lastShotCount = s.myShots.length;
+
     phase.textContent = s.isMyTurn ? "Твой ход! Стреляй!" : "Ход противника...";
     phase.style.color = s.isMyTurn ? "#00cec9" : "#636e72";
 

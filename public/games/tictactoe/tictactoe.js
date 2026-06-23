@@ -21,7 +21,7 @@ function create_tictactoe(opts) {
   } else {
     document.getElementById("tttExit").onclick = () => document.getElementById("backToMenu").click();
   }
-  document.querySelectorAll(".ttt-cell").forEach(c => c.onclick = () => send({ type: "game-action", action: "move", data: { cell: parseInt(c.dataset.cell) } }));
+  document.querySelectorAll(".ttt-cell").forEach(c => c.onclick = () => { send({ type: "game-action", action: "move", data: { cell: parseInt(c.dataset.cell) } }); sfx.place(); });
   function onState(s) {
     document.querySelectorAll(".ttt-cell").forEach((c, i) => {
       c.textContent = s.board[i] || ""; c.className = "ttt-cell";
