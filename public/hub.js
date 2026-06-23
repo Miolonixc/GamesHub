@@ -132,6 +132,18 @@
         if (gameInstance && gameInstance.onOpponentLeft) gameInstance.onOpponentLeft();
         break;
 
+      case "back-to-menu":
+        if (gameInstance && gameInstance.destroy) gameInstance.destroy();
+        gameInstance = null;
+        currentGame = "";
+        if (isHost) {
+          showScreen("gameSelect");
+        } else {
+          showScreen("waiting");
+          $("#waitInfo").textContent = "Ожидание выбора игры хостом...";
+        }
+        break;
+
       case "error":
         alert(msg.message);
         showScreen("lobby");
@@ -174,10 +186,14 @@
   $("#backToMenu").onclick = () => {
     if (gameInstance && gameInstance.destroy) gameInstance.destroy();
     gameInstance = null;
-    send({ type: "leave-room" });
-    currentRoomId = "";
-    isHost = false;
-    showScreen("lobby");
+    currentGame = "";
+    send({ type: "game-action", action: "back-to-menu" });
+    if (isHost) {
+      showScreen("gameSelect");
+    } else {
+      showScreen("waiting");
+      $("#waitInfo").textContent = "Ожидание выбора игры хостом...";
+    }
   };
 
   // --- Auto-join from URL ---

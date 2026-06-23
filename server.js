@@ -96,6 +96,17 @@ wss.on("connection", (ws) => {
           return;
         }
 
+        if (msg.action === "back-to-menu") {
+          if (room.game) {
+            const gameModule = gameModules[room.game];
+            if (gameModule && gameModule.cleanup) gameModule.cleanup(room);
+          }
+          room.game = null;
+          room.state = null;
+          broadcastToRoom(room, { type: "back-to-menu" });
+          return;
+        }
+
         if (!room.game) return;
         const gameModule = gameModules[room.game];
         if (gameModule && gameModule.handleAction) {
