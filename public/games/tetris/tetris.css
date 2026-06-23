@@ -1,0 +1,30 @@
+.tetris-mode-select { text-align: center; padding: 40px 20px; }
+.tetris-mode-select h2 { margin-bottom: 24px; font-size: 1.3rem; }
+.tetris-mode-select .btn { display: block; width: 200px; margin: 10px auto; padding: 16px; font-size: 1.1rem; }
+.tetris-wrapper { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 8px; }
+.tetris-board-area { display: flex; align-items: flex-start; gap: 12px; }
+.tetris-main-board { border: 2px solid #2d2d5a; border-radius: 4px; line-height: 0; }
+.tetris-main-board canvas { display: block; }
+.tetris-info { display: flex; flex-direction: column; gap: 8px; min-width: 80px; }
+.tetris-info canvas { display: block; border: 1px solid #2d2d5a; border-radius: 4px; background: #0a0a1a; }
+.stat { text-align: center; }
+.stat .label { display: block; font-size: 0.7rem; color: #636e72; text-transform: uppercase; letter-spacing: 1px; }
+.stat span:not(.label) { font-size: 1.1rem; font-weight: 700; color: #dfe6e9; }
+.opp-score { color: #636e72 !important; font-size: 0.9rem !important; }
+.tetris-dpad { display: grid; grid-template-columns: repeat(3, 56px); grid-template-rows: auto auto auto; gap: 6px; justify-content: center; margin-top: 8px; }
+.dpad-btn { width: 56px; height: 56px; border-radius: 12px; border: 1px solid #2d2d5a; background: #12122a; color: #dfe6e9; font-size: 1.4rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; -webkit-tap-highlight-color: transparent; user-select: none; }
+.dpad-btn:active { background: #6c5ce7; border-color: #6c5ce7; }
+.dpad-row { display: contents; }
+.tetris-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 200; }
+.tetris-overlay.hidden { display: none; }
+.tetris-overlay-content { background: #12122a; border: 1px solid #2d2d5a; border-radius: 16px; padding: 30px; text-align: center; max-width: 320px; }
+.tetris-overlay-content h2 { margin-bottom: 10px; font-size: 1.5rem; }
+.tetris-overlay-content p { color: #636e72; margin-bottom: 20px; }
+.tetris-overlay-content .btn { width: 100%; }
+@media (max-width: 500px) {
+  .tetris-board-area { gap: 6px; }
+  .tetris-info { min-width: 56px; gap: 4px; }
+  .stat span:not(.label) { font-size: 0.85rem; }
+  .tetris-info canvas { width: 56px !important; height: auto !important; }
+  .dpad-btn { width: 50px; height: 50px; font-size: 1.2rem; }
+}
