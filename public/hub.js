@@ -24,7 +24,8 @@
     const names = {
       tetris: "Тетрис", pong: "Pong",
       tictactoe: "Крестики-нолики",
-      connect4: "Четыре в ряд", memory: "Пары"
+      connect4: "Четыре в ряд", memory: "Пары",
+      seabattle: "Морской бой", checkers: "Шашки"
     };
     return names[g] || g;
   }
@@ -97,6 +98,17 @@
     }
   });
 
+  // --- Theme toggle ---
+  const savedTheme = localStorage.getItem("gh_theme") || "dark";
+  if (savedTheme === "light") document.body.classList.add("light");
+
+  $("#themeToggle").onclick = () => {
+    document.body.classList.toggle("light");
+    const isLight = document.body.classList.contains("light");
+    localStorage.setItem("gh_theme", isLight ? "light" : "dark");
+    $("#themeToggle").textContent = isLight ? "☀️ Светлая тема" : "🌙 Тёмная тема";
+  };
+
   // --- Logout button ---
   $("#logoutBtn").onclick = () => {
     if (gameInstance && gameInstance.destroy) gameInstance.destroy();
@@ -150,6 +162,10 @@
         updatePlayerList(msg.players);
         break;
 
+      case "scoreboard":
+        updateScoreboard(msg.score);
+        break;
+
       case "game-proposed":
         showProposal(msg.game, msg.proposer);
         break;
@@ -199,6 +215,18 @@
     const el = $("#onlinePlayers");
     if (!el) return;
     el.innerHTML = players.map(n => `<span class="online-dot"></span> ${n}`).join("  ");
+  }
+
+  // --- Scoreboard ---
+  function updateScoreboard(score) {
+    const el = $("#scoreboard");
+    if (!el || !score) return;
+    const entries = Object.entries(score);
+    if (entries.length === 0) { el.classList.add("hidden"); return; }
+    el.classList.remove("hidden");
+    el.innerHTML = entries.map(([name, s]) =>
+      `<div class="score-row"><span class="score-name">${name}</span><span class="score-stats">${s.wins}W ${s.losses}L ${s.draws}D</span></div>`
+    ).join("");
   }
 
   // --- Game proposal ---

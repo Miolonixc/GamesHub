@@ -1,0 +1,19 @@
+.sb-wrapper { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 12px; }
+.sb-info { font-size: 0.9rem; }
+.sb-my { color: #6c5ce7; font-weight: 600; }
+.sb-opp { color: #00cec9; font-weight: 600; }
+.sb-phase { font-size: 1rem; font-weight: 600; min-height: 24px; }
+.sb-grids { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+.sb-grid-block { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.sb-grid-label { font-size: 0.8rem; color: #636e72; text-transform: uppercase; letter-spacing: 1px; }
+.sb-grid { display: grid; grid-template-columns: repeat(10, 28px); grid-template-rows: repeat(10, 28px); gap: 1px; background: #2d2d5a; border: 2px solid #2d2d5a; border-radius: 4px; }
+.sb-cell { background: #0a0a1a; transition: background 0.15s; position: relative; }
+.sb-cell.sb-ship { background: #6c5ce7; }
+.sb-cell.sb-hit { background: #d63031; }
+.sb-cell.sb-hit::after { content: "✕"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; font-weight: 700; }
+.sb-cell.sb-miss { background: #2d2d5a; }
+.sb-grid-enemy .sb-cell:hover:not(.sb-hit):not(.sb-miss) { background: #1a1a3a; cursor: crosshair; }
+.sb-stats { font-size: 0.75rem; color: #636e72; }
+@media (max-width: 500px) {
+  .sb-grid { grid-template-columns: repeat(10, 24px); grid-template-rows: repeat(10, 24px); }
+}

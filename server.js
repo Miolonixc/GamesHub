@@ -30,6 +30,8 @@ try { gameModules.pong = require("./server/games/pong-server"); } catch(e) {}
 try { gameModules.tictactoe = require("./server/games/tictactoe-server"); } catch(e) {}
 try { gameModules.connect4 = require("./server/games/connect4-server"); } catch(e) {}
 try { gameModules.memory = require("./server/games/memory-server"); } catch(e) {}
+try { gameModules.seabattle = require("./server/games/seabattle-server"); } catch(e) {}
+try { gameModules.checkers = require("./server/games/checkers-server"); } catch(e) {}
 
 wss.on("connection", (ws) => {
   const playerId = Math.random().toString(36).substring(2, 10);
@@ -47,6 +49,7 @@ wss.on("connection", (ws) => {
         clients.get(playerId).roomId = room.id;
         clients.get(playerId).name = msg.name;
         ws.send(JSON.stringify({ type: "room-created", roomId: room.id }));
+        ws.send(JSON.stringify({ type: "scoreboard", score: room.score }));
         break;
       }
 
@@ -69,6 +72,7 @@ wss.on("connection", (ws) => {
         clients.get(playerId).roomId = roomId;
         clients.get(playerId).name = msg.name;
         ws.send(JSON.stringify({ type: "room-joined", roomId }));
+        ws.send(JSON.stringify({ type: "scoreboard", score: room.score }));
         broadcastPlayerList(room);
         break;
       }
@@ -139,7 +143,23 @@ wss.on("connection", (ws) => {
         const gameModule = gameModules[room.game];
         if (gameModule && gameModule.handleAction) {
           const result = gameModule.handleAction(room, playerId, msg.action, msg.data);
-          if (result) broadcastToRoom(room, result);
+          if (result) {
+            if (result.type === "game-over") {
+              room.players.forEach(p => {
+                if (!room.score[p.name]) room.score[p.name] = { wins: 0, losses: 0, draws: 0 };
+              });
+              if (result.winner) {
+                const winnerName = result.winner;
+                const loserName = room.players.find(p => p.name !== winnerName)?.name;
+                if (room.score[winnerName]) room.score[winnerName].wins++;
+                if (loserName && room.score[loserName]) room.score[loserName].losses++;
+              } else {
+                room.players.forEach(p => { if (room.score[p.name]) room.score[p.name].draws++; });
+              }
+              broadcastToRoom(room, { type: "scoreboard", score: room.score });
+            }
+            broadcastToRoom(room, result);
+          }
         }
         break;
       }

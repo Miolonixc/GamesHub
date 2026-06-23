@@ -12,7 +12,8 @@ class RoomManager {
       players: [],
       maxPlayers: 2,
       state: null,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      score: {}
     };
     this.rooms.set(id, room);
     return room;
