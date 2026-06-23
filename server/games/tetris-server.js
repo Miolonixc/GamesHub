@@ -108,6 +108,8 @@ function initBattle(room) {
 function tickBattle(room) {
   room.state.tickCount++;
   const players = room.players.filter(p => room.state.alive[p.id]);
+  const pendingGarbage = {};
+
   players.forEach(p => {
     const cur = room.state.current[p.id];
     const board = room.state.boards[p.id];
@@ -121,8 +123,8 @@ function tickBattle(room) {
       const garbage = garbageCount(cleared);
       if (garbage > 0) {
         const opponent = room.players.find(op => op.id !== p.id);
-        if (opponent && room.state.alive[opponent.id]) {
-          addGarbage(room.state.boards[opponent.id], garbage);
+        if (opponent) {
+          pendingGarbage[opponent.id] = (pendingGarbage[opponent.id] || 0) + garbage;
         }
       }
       spawnNext(room, p.id);
@@ -133,6 +135,14 @@ function tickBattle(room) {
       cur.y++;
     }
   });
+
+  // Apply deferred garbage AFTER both players processed
+  for (const [pid, count] of Object.entries(pendingGarbage)) {
+    if (room.state.alive[pid]) {
+      addGarbage(room.state.boards[pid], count);
+    }
+  }
+
   const alive = room.players.filter(p => room.state.alive[p.id]);
   if (alive.length <= 1 && room.players.length > 1) {
     const winner = alive[0];

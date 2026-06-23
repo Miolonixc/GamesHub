@@ -132,6 +132,18 @@ input[type="text"]:focus { border-color: var(--primary); }
 .room-id-label { color: var(--text-dim); }
 .room-id-label span { color: var(--accent); font-family: monospace; font-weight: 700; letter-spacing: 2px; }
 
+.btn-logout {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
 .online-bar {
   display: flex;
   align-items: center;

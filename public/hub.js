@@ -29,6 +29,19 @@
     return names[g] || g;
   }
 
+  // --- Persistence ---
+  function saveSession() {
+    localStorage.setItem("gh_name", myName);
+    localStorage.setItem("gh_room", currentRoomId);
+    localStorage.setItem("gh_host", isHost ? "1" : "0");
+  }
+
+  function clearSession() {
+    localStorage.removeItem("gh_name");
+    localStorage.removeItem("gh_room");
+    localStorage.removeItem("gh_host");
+  }
+
   // --- WebSocket ---
   function connectWS(onOpen) {
     if (ws && ws.readyState === WebSocket.OPEN) { onOpen(); return; }
@@ -36,7 +49,20 @@
     ws = new WebSocket(`${proto}://${location.host}`);
     ws.onopen = () => { chat.init(ws); if (onOpen) onOpen(); };
     ws.onmessage = (e) => handleMessage(JSON.parse(e.data));
-    ws.onclose = () => chat.addSystem("Соединение потеряно");
+    ws.onclose = () => {
+      chat.addSystem("Соединение потеряно");
+      setTimeout(() => {
+        if (currentRoomId) {
+          connectWS(() => {
+            if (isHost) {
+              send({ type: "create-room", name: myName });
+            } else {
+              send({ type: "join-room", roomId: currentRoomId, name: myName });
+            }
+          });
+        }
+      }, 2000);
+    };
   }
 
   function send(msg) {
@@ -71,6 +97,19 @@
     }
   });
 
+  // --- Logout button ---
+  $("#logoutBtn").onclick = () => {
+    if (gameInstance && gameInstance.destroy) gameInstance.destroy();
+    gameInstance = null;
+    send({ type: "leave-room" });
+    currentRoomId = "";
+    currentGame = "";
+    isHost = false;
+    myName = "";
+    clearSession();
+    showScreen("lobby");
+  };
+
   // --- Game Selection: propose game ---
   document.querySelectorAll(".game-card").forEach(card => {
     card.onclick = () => {
@@ -84,6 +123,7 @@
     send({ type: "leave-room" });
     currentRoomId = "";
     isHost = false;
+    clearSession();
     showScreen("lobby");
   };
 
@@ -94,14 +134,16 @@
         currentRoomId = msg.roomId;
         $("#myNameDisplay").textContent = myName;
         $("#myRoomId").textContent = msg.roomId;
+        saveSession();
         showScreen("gameSelect");
         break;
 
       case "room-joined":
         currentRoomId = msg.roomId;
-        showScreen("gameSelect");
         $("#myNameDisplay").textContent = myName;
         $("#myRoomId").textContent = msg.roomId;
+        saveSession();
+        showScreen("gameSelect");
         break;
 
       case "player-list":
@@ -142,8 +184,7 @@
         gameInstance = null;
         currentGame = "";
         hideProposal();
-        if (isHost) showScreen("gameSelect");
-        else { showScreen("gameSelect"); }
+        showScreen("gameSelect");
         break;
 
       case "error":
@@ -235,6 +276,24 @@
     hideProposal();
     showScreen("gameSelect");
   };
+
+  // --- Auto-reconnect on page load ---
+  const savedName = localStorage.getItem("gh_name");
+  const savedRoom = localStorage.getItem("gh_room");
+  const savedHost = localStorage.getItem("gh_host");
+
+  if (savedName && savedRoom) {
+    myName = savedName;
+    currentRoomId = savedRoom;
+    isHost = savedHost === "1";
+    connectWS(() => {
+      if (isHost) {
+        send({ type: "create-room", name: myName });
+      } else {
+        send({ type: "join-room", roomId: savedRoom, name: myName });
+      }
+    });
+  }
 
   // --- Auto-join from URL ---
   const urlParams = new URLSearchParams(window.location.search);
