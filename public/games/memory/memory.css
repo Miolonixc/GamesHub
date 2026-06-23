@@ -1,0 +1,14 @@
+.mem-wrapper { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px; }
+.mem-scores { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
+.mem-pname { font-weight: 600; }
+.mem-p1 { color: #6c5ce7; }
+.mem-p2 { color: #00cec9; }
+.mem-dash { color: #636e72; }
+.mem-status { font-size: 1rem; font-weight: 600; color: #dfe6e9; min-height: 24px; }
+.mem-board { display: grid; grid-template-columns: repeat(4, 80px); grid-template-rows: repeat(4, 80px); gap: 6px; }
+.mem-card { background: #12122a; border: 2px solid #2d2d5a; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 2rem; cursor: pointer; transition: all 0.2s; user-select: none; color: #636e72; }
+.mem-card:hover:not(.mem-matched):not(.mem-flipped) { border-color: #6c5ce7; background: #1a1a3a; }
+.mem-card.mem-flipped { background: #1a1a3a; border-color: #6c5ce7; color: #dfe6e9; cursor: default; }
+.mem-card.mem-matched { background: #0a2a1a; border-color: #00b894; opacity: 0.7; cursor: default; animation: memPop 0.3s ease; }
+@keyframes memPop { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+@media (max-width: 500px) { .mem-board { grid-template-columns: repeat(4, 65px); grid-template-rows: repeat(4, 65px); gap: 4px; } .mem-card { font-size: 1.6rem; } }
