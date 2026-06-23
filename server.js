@@ -6,24 +6,15 @@ const RoomManager = require("./server/room-manager");
 
 const PORT = 3000;
 const MIME = {
-  ".html": "text/html",
-  ".css": "text/css",
-  ".js": "application/javascript",
-  ".json": "application/json",
-  ".png": "image/png",
-  ".svg": "image/svg+xml"
+  ".html": "text/html", ".css": "text/css", ".js": "application/javascript",
+  ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml"
 };
 
 const server = http.createServer((req, res) => {
   let filePath = path.join(__dirname, "public", req.url === "/" ? "index.html" : req.url.split("?")[0]);
   const ext = path.extname(filePath);
-
   fs.readFile(filePath, (err, data) => {
-    if (err) {
-      res.writeHead(404);
-      res.end("Not found");
-      return;
-    }
+    if (err) { res.writeHead(404); res.end("Not found"); return; }
     res.writeHead(200, { "Content-Type": MIME[ext] || "text/plain" });
     res.end(data);
   });
@@ -33,7 +24,6 @@ const wss = new WebSocketServer({ server });
 const roomManager = new RoomManager();
 const clients = new Map();
 
-// Game modules
 const gameModules = {};
 try { gameModules.tetris = require("./server/games/tetris-server"); } catch(e) {}
 try { gameModules.pong = require("./server/games/pong-server"); } catch(e) {}
@@ -51,47 +41,45 @@ wss.on("connection", (ws) => {
 
     switch (msg.type) {
       case "create-room": {
-        const room = roomManager.createRoom(msg.game);
+        const room = roomManager.createRoom(null);
+        room.hostId = playerId;
         const result = roomManager.joinRoom(room.id, { id: playerId, name: msg.name, _ws: ws });
         clients.get(playerId).roomId = room.id;
         clients.get(playerId).name = msg.name;
-
-        ws.send(JSON.stringify({
-          type: "room-created",
-          roomId: room.id,
-          game: msg.game
-        }));
+        ws.send(JSON.stringify({ type: "room-created", roomId: room.id }));
         break;
       }
 
       case "join-room": {
-        const result = roomManager.joinRoom(msg.roomId.toUpperCase(), {
-          id: playerId,
-          name: msg.name,
-          _ws: ws
-        });
-
+        const roomId = msg.roomId.toUpperCase();
+        const room = roomManager.getRoomById(roomId);
+        if (!room) {
+          ws.send(JSON.stringify({ type: "error", message: "Комната не найдена" }));
+          return;
+        }
+        if (room.players.length >= 2) {
+          ws.send(JSON.stringify({ type: "error", message: "Комната заполнена" }));
+          return;
+        }
+        const result = roomManager.joinRoom(roomId, { id: playerId, name: msg.name, _ws: ws });
         if (result.error) {
           ws.send(JSON.stringify({ type: "error", message: result.error }));
           return;
         }
-
-        clients.get(playerId).roomId = msg.roomId.toUpperCase();
+        clients.get(playerId).roomId = roomId;
         clients.get(playerId).name = msg.name;
+        ws.send(JSON.stringify({ type: "room-joined", roomId }));
+        break;
+      }
 
-        ws.send(JSON.stringify({
-          type: "room-joined",
-          roomId: msg.roomId.toUpperCase(),
-          game: result.room.game
-        }));
+      case "game-action": {
+        const room = roomManager.getRoom(playerId);
+        if (!room) return;
 
-        if (result.ready) {
-          const room = result.room;
-          const gameModule = gameModules[room.game];
-
-          if (gameModule && gameModule.init) {
-            room.state = gameModule.init(room);
-          }
+        if (msg.action === "select-game") {
+          const game = msg.data?.game;
+          if (!game || !gameModules[game]) return;
+          room.game = game;
 
           room.players.forEach(p => {
             const c = clients.get(p.id);
@@ -105,14 +93,10 @@ wss.on("connection", (ws) => {
               }));
             }
           });
+          return;
         }
-        break;
-      }
 
-      case "game-action": {
-        const room = roomManager.getRoom(playerId);
-        if (!room) return;
-
+        if (!room.game) return;
         const gameModule = gameModules[room.game];
         if (gameModule && gameModule.handleAction) {
           const result = gameModule.handleAction(room, playerId, msg.action, msg.data);
@@ -125,11 +109,7 @@ wss.on("connection", (ws) => {
         const room = roomManager.getRoom(playerId);
         if (!room) return;
         const name = clients.get(playerId)?.name || "Unknown";
-        broadcastToRoom(room, {
-          type: "chat",
-          name,
-          text: msg.text.substring(0, 200)
-        });
+        broadcastToRoom(room, { type: "chat", name, text: msg.text.substring(0, 200) });
         break;
       }
     }
@@ -142,14 +122,10 @@ wss.on("connection", (ws) => {
       roomManager.leaveRoom(playerId);
 
       if (room && room.players.length > 0) {
-        broadcastToRoom(room, {
-          type: "opponent-left",
-          name: client.name
-        });
-
-        const gameModule = gameModules[room.game];
-        if (gameModule && gameModule.cleanup) {
-          gameModule.cleanup(room);
+        broadcastToRoom(room, { type: "opponent-left", name: client.name });
+        if (room.game) {
+          const gameModule = gameModules[room.game];
+          if (gameModule && gameModule.cleanup) gameModule.cleanup(room);
         }
       }
     }
@@ -161,9 +137,7 @@ function broadcastToRoom(room, msg) {
   const data = JSON.stringify(msg);
   room.players.forEach(p => {
     const c = clients.get(p.id);
-    if (c && c.ws.readyState === 1) {
-      c.ws.send(data);
-    }
+    if (c && c.ws.readyState === 1) c.ws.send(data);
   });
 }
 

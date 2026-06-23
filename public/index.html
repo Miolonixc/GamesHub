@@ -12,27 +12,33 @@
     <div class="lobby-card">
       <h1>Game Hub</h1>
       <p class="subtitle">Играй вдвоем</p>
-      <div class="name-inputs">
-        <input type="text" id="name1" placeholder="Имя игрока 1" maxlength="15" autocomplete="off">
-        <input type="text" id="name2" placeholder="Имя игрока 2" maxlength="15" autocomplete="off">
+      <input type="text" id="playerName" placeholder="Твоё имя" maxlength="15" autocomplete="off">
+      <div class="lobby-actions">
+        <button id="createBtn" class="btn primary">Создать игру</button>
+        <div class="divider">или</div>
+        <div class="join-row">
+          <input type="text" id="roomCodeInput" placeholder="ВВЕДИ КОД КОМНАТЫ" maxlength="6" autocomplete="off">
+          <button id="joinBtn" class="btn primary">Войти</button>
+        </div>
       </div>
-      <button id="enterBtn" class="btn primary">Войти</button>
     </div>
   </div>
 
-  <!-- Game Selection Screen -->
+  <!-- Game Selection Screen (host only) -->
   <div id="gameSelect" class="screen">
     <div class="top-bar">
-      <div class="player-names">
-        <span id="p1Display"></span> & <span id="p2Display"></span>
+      <div class="player-info">
+        <span id="myNameDisplay"></span>
+        <span class="room-id-label">Код: <span id="myRoomId"></span></span>
       </div>
     </div>
     <h2>Выберите игру</h2>
+    <p class="hint-text">Отправь код другу — он введёт его и войдёт</p>
     <div class="games-grid">
       <div class="game-card" data-game="tetris">
         <div class="game-icon">🎮</div>
         <h3>Тетрис</h3>
-        <p>Бattle и Co-op режимы</p>
+        <p>Battle и Co-op</p>
       </div>
       <div class="game-card" data-game="pong">
         <div class="game-icon">🏓</div>
@@ -47,23 +53,12 @@
       <div class="game-card" data-game="connect4">
         <div class="game-icon">🔴</div>
         <h3>Четыре в ряд</h3>
-        <p>Сстратегия и логика</p>
+        <p>Стратегия и логика</p>
       </div>
       <div class="game-card" data-game="memory">
         <div class="game-icon">🧠</div>
         <h3>Пары</h3>
         <p>Найди все пары</p>
-      </div>
-    </div>
-
-    <!-- Room Modal -->
-    <div id="roomModal" class="modal hidden">
-      <div class="modal-content">
-        <h3 id="modalTitle">Создаём комнату...</h3>
-        <div id="roomCode" class="room-code"></div>
-        <p id="modalHint" class="hint">Отправь код другу</p>
-        <div id="waitingSpinner" class="spinner"></div>
-        <button id="closeModal" class="btn secondary">Отмена</button>
       </div>
     </div>
   </div>
@@ -73,7 +68,7 @@
     <div class="waiting-card">
       <div class="spinner"></div>
       <h2>Ожидание противника...</h2>
-      <p id="waitGame"></p>
+      <p id="waitInfo"></p>
       <button id="cancelWait" class="btn secondary">Отмена</button>
     </div>
   </div>

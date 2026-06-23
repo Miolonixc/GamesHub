@@ -13,64 +13,11 @@
   let currentGame = "";
   let currentRoomId = "";
   let gameInstance = null;
+  let isHost = false;
 
   function showScreen(name) {
     Object.values(screens).forEach(s => s.classList.remove("active"));
     screens[name].classList.add("active");
-  }
-
-  // --- Lobby ---
-  $("#enterBtn").onclick = () => {
-    const n1 = $("#name1").value.trim();
-    const n2 = $("#name2").value.trim();
-    if (!n1 || !n2) return alert("Введите имена обоих игроков");
-    myName = n1;
-    opponentName = n2;
-    $("#p1Display").textContent = n1;
-    $("#p2Display").textContent = n2;
-    connectWS(() => showScreen("gameSelect"));
-  };
-
-  $("#name2").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") $("#enterBtn").click();
-  });
-
-  // --- WebSocket ---
-  function connectWS(onOpen) {
-    const proto = location.protocol === "https:" ? "wss" : "ws";
-    ws = new WebSocket(`${proto}://${location.host}`);
-
-    ws.onopen = () => {
-      chat.init(ws);
-      if (onOpen) onOpen();
-    };
-
-    ws.onmessage = (e) => {
-      const msg = JSON.parse(e.data);
-      handleMessage(msg);
-    };
-
-    ws.onclose = () => {
-      chat.addSystem("Соединение потеряно");
-    };
-  }
-
-  function send(msg) {
-    if (ws && ws.readyState === 1) ws.send(JSON.stringify(msg));
-  }
-
-  // --- Game Selection ---
-  document.querySelectorAll(".game-card").forEach(card => {
-    card.onclick = () => {
-      currentGame = card.dataset.game;
-      createRoom();
-    };
-  });
-
-  function createRoom() {
-    showScreen("waiting");
-    $("#waitGame").textContent = getGameName(currentGame);
-    send({ type: "create-room", game: currentGame, name: myName });
   }
 
   function getGameName(g) {
@@ -82,26 +29,71 @@
     return names[g] || g;
   }
 
-  // --- Modal ---
-  let pendingRoomId = "";
-
-  function showRoomModal(roomId) {
-    pendingRoomId = roomId;
-    $("#roomCode").textContent = roomId;
-    $("#modalHint").textContent = `Отправь код другу: ${roomId}`;
-    $("#roomModal").classList.remove("hidden");
-    $("#waitingSpinner").style.display = "none";
+  // --- WebSocket ---
+  function connectWS(onOpen) {
+    if (ws && ws.readyState === WebSocket.OPEN) { onOpen(); return; }
+    const proto = location.protocol === "https:" ? "wss" : "ws";
+    ws = new WebSocket(`${proto}://${location.host}`);
+    ws.onopen = () => { chat.init(ws); if (onOpen) onOpen(); };
+    ws.onmessage = (e) => handleMessage(JSON.parse(e.data));
+    ws.onclose = () => chat.addSystem("Соединение потеряно");
   }
 
-  $("#closeModal").onclick = () => {
-    $("#roomModal").classList.add("hidden");
-    send({ type: "leave-room" });
-    showScreen("gameSelect");
+  function send(msg) {
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify(msg));
+  }
+
+  // --- Lobby: Create game ---
+  $("#createBtn").onclick = () => {
+    const name = $("#playerName").value.trim();
+    if (!name) return alert("Введите имя");
+    myName = name;
+    isHost = true;
+    connectWS(() => {
+      send({ type: "create-room", name: myName });
+    });
   };
 
+  // --- Lobby: Join game ---
+  $("#joinBtn").onclick = () => {
+    const name = $("#playerName").value.trim();
+    const code = $("#roomCodeInput").value.trim().toUpperCase();
+    if (!name) return alert("Введите имя");
+    if (!code) return alert("Введите код комнаты");
+    myName = name;
+    isHost = false;
+    connectWS(() => {
+      send({ type: "join-room", roomId: code, name: myName });
+    });
+  };
+
+  $("#roomCodeInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") $("#joinBtn").click();
+  });
+
+  $("#playerName").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      if ($("#roomCodeInput").value.trim()) $("#joinBtn").click();
+      else $("#createBtn").click();
+    }
+  });
+
+  // --- Game Selection (host picks game) ---
+  document.querySelectorAll(".game-card").forEach(card => {
+    card.onclick = () => {
+      currentGame = card.dataset.game;
+      showScreen("waiting");
+      $("#waitInfo").textContent = `${getGameName(currentGame)} — ожидание противника...`;
+      send({ type: "game-action", action: "select-game", data: { game: currentGame } });
+    };
+  });
+
+  // --- Cancel ---
   $("#cancelWait").onclick = () => {
     send({ type: "leave-room" });
-    showScreen("gameSelect");
+    currentRoomId = "";
+    isHost = false;
+    showScreen("lobby");
   };
 
   // --- Handle messages ---
@@ -109,15 +101,15 @@
     switch (msg.type) {
       case "room-created":
         currentRoomId = msg.roomId;
-        showRoomModal(msg.roomId);
+        $("#myNameDisplay").textContent = myName;
+        $("#myRoomId").textContent = msg.roomId;
+        showScreen("gameSelect");
         break;
 
       case "room-joined":
         currentRoomId = msg.roomId;
-        currentGame = msg.game;
-        $("#roomModal").classList.add("hidden");
         showScreen("waiting");
-        $("#waitGame").textContent = getGameName(msg.game);
+        $("#waitInfo").textContent = "Ожидание выбора игры хостом...";
         break;
 
       case "room-ready":
@@ -128,34 +120,21 @@
         break;
 
       case "game-state":
-        if (gameInstance && gameInstance.onState) {
-          gameInstance.onState(msg.state);
-        }
+        if (gameInstance && gameInstance.onState) gameInstance.onState(msg.state);
         break;
 
       case "game-over":
-        if (gameInstance && gameInstance.onGameOver) {
-          gameInstance.onGameOver(msg);
-        }
+        if (gameInstance && gameInstance.onGameOver) gameInstance.onGameOver(msg);
         break;
 
       case "opponent-left":
         chat.addSystem(`${msg.name} покинул игру`);
-        if (gameInstance && gameInstance.onOpponentLeft) {
-          gameInstance.onOpponentLeft();
-        }
+        if (gameInstance && gameInstance.onOpponentLeft) gameInstance.onOpponentLeft();
         break;
-
-      case "game-action": {
-        if (gameInstance && gameInstance.onAction) {
-          gameInstance.onAction(msg.action, msg.data);
-        }
-        break;
-      }
 
       case "error":
         alert(msg.message);
-        showScreen("gameSelect");
+        showScreen("lobby");
         break;
     }
   }
@@ -166,7 +145,6 @@
     $("#gameTitle").textContent = getGameName(currentGame);
     $("#gameContainer").innerHTML = "";
 
-    // Load game CSS
     const cssId = `css-${currentGame}`;
     if (!document.getElementById(cssId)) {
       const link = document.createElement("link");
@@ -197,14 +175,15 @@
     if (gameInstance && gameInstance.destroy) gameInstance.destroy();
     gameInstance = null;
     send({ type: "leave-room" });
-    showScreen("gameSelect");
+    currentRoomId = "";
+    isHost = false;
+    showScreen("lobby");
   };
 
-  // --- Join room from URL ---
+  // --- Auto-join from URL ---
   const urlParams = new URLSearchParams(window.location.search);
   const joinId = urlParams.get("join");
   if (joinId) {
-    // Show lobby but auto-fill join
-    window._autoJoin = joinId.toUpperCase();
+    $("#roomCodeInput").value = joinId.toUpperCase();
   }
 })();
