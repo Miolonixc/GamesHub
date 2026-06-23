@@ -1,5 +1,6 @@
 function create_tictactoe(opts) {
-  const { container, send, myName, opponentName } = opts;
+  const { container, send, myName, opponentName, isHost } = opts;
+  const startBtn = isHost ? `<button class="btn primary" id="tttStart">Начать игру</button>` : `<button class="btn secondary" id="tttExit">Выйти в меню</button>`;
   container.innerHTML = `
     <div class="ttt-wrapper">
       <div class="ttt-scores">
@@ -11,11 +12,15 @@ function create_tictactoe(opts) {
         <span id="tttOppWins">0</span>
         <span class="ttt-pname ttt-o">${opponentName} (O)</span>
       </div>
-      <div class="ttt-status" id="tttStatus">Нажми "Начать"</div>
+      <div class="ttt-status" id="tttStatus">${isHost ? 'Нажми "Начать"' : 'Ожидание...'}</div>
       <div class="ttt-board" id="tttBoard">${Array(9).fill(0).map((_, i) => `<div class="ttt-cell" data-cell="${i}"></div>`).join("")}</div>
-      <button class="btn primary" id="tttStart">Начать игру</button>
+      ${startBtn}
     </div>`;
-  document.getElementById("tttStart").onclick = () => send({ type: "game-action", action: "start" });
+  if (isHost) {
+    document.getElementById("tttStart").onclick = () => send({ type: "game-action", action: "start" });
+  } else {
+    document.getElementById("tttExit").onclick = () => document.getElementById("backToMenu").click();
+  }
   document.querySelectorAll(".ttt-cell").forEach(c => c.onclick = () => send({ type: "game-action", action: "move", data: { cell: parseInt(c.dataset.cell) } }));
   function onState(s) {
     document.querySelectorAll(".ttt-cell").forEach((c, i) => {

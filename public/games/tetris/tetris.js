@@ -1,16 +1,26 @@
 function create_tetris(opts) {
-  const { container, send, myName, opponentName } = opts;
-  container.innerHTML = `
-    <div class="tetris-mode-select">
-      <h2>Режим Тетриса</h2>
-      <button class="btn primary" id="tetrisBattle">⚔️ Battle</button>
-      <button class="btn secondary" id="tetrisCoop">🤝 Co-op</button>
-    </div>`;
+  const { container, send, myName, opponentName, isHost } = opts;
+
+  if (isHost) {
+    container.innerHTML = `
+      <div class="tetris-mode-select">
+        <h2>Режим Тетриса</h2>
+        <button class="btn primary" id="tetrisBattle">⚔️ Battle</button>
+        <button class="btn secondary" id="tetrisCoop">🤝 Co-op</button>
+      </div>`;
+    document.getElementById("tetrisBattle").onclick = () => startMode("battle");
+    document.getElementById("tetrisCoop").onclick = () => startMode("coop");
+  } else {
+    container.innerHTML = `
+      <div class="tetris-mode-select">
+        <h2>Ожидание выбора режима...</h2>
+        <div class="spinner"></div>
+        <button class="btn secondary" id="tetrisExit" style="margin-top:16px">Выйти в меню</button>
+      </div>`;
+    document.getElementById("tetrisExit").onclick = () => document.getElementById("backToMenu").click();
+  }
 
   let mode = null, canvas, ctx, miniCanvas, miniCtx, cellSize = 0, miniCellSize = 0, lastState = null;
-
-  document.getElementById("tetrisBattle").onclick = () => startMode("battle");
-  document.getElementById("tetrisCoop").onclick = () => startMode("coop");
 
   function startMode(m) {
     mode = m;
@@ -99,6 +109,11 @@ function create_tetris(opts) {
 
   function onState(state) {
     lastState = state;
+    if (!ctx && state.mode) {
+      mode = state.mode;
+      buildUI();
+      setupControls();
+    }
     if (!ctx) return;
     const COLS = 10, ROWS = 20;
     ctx.fillStyle = "#0a0a1a"; ctx.fillRect(0, 0, canvas.width, canvas.height);

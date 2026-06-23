@@ -175,7 +175,8 @@
           container: $("#gameContainer"),
           send,
           myName,
-          opponentName
+          opponentName,
+          isHost
         });
       }
     };

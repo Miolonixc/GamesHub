@@ -1,5 +1,6 @@
 function create_connect4(opts) {
-  const { container, send, myName, opponentName } = opts;
+  const { container, send, myName, opponentName, isHost } = opts;
+  const startBtn = isHost ? `<button class="btn primary" id="c4Start">Начать игру</button>` : `<button class="btn secondary" id="c4Exit">Выйти в меню</button>`;
   container.innerHTML = `
     <div class="c4-wrapper">
       <div class="c4-scores">
@@ -11,12 +12,16 @@ function create_connect4(opts) {
         <span id="c4OppWins">0</span>
         <span class="c4-pname c4-p2">${opponentName}</span>
       </div>
-      <div class="c4-status" id="c4Status">Нажми "Начать"</div>
+      <div class="c4-status" id="c4Status">${isHost ? 'Нажми "Начать"' : 'Ожидание...'}</div>
       <div class="c4-col-select" id="c4ColSelect">${Array(7).fill(0).map((_, i) => `<div class="c4-col-btn" data-col="${i}">▼</div>`).join("")}</div>
       <div class="c4-board" id="c4Board"></div>
-      <button class="btn primary" id="c4Start">Начать игру</button>
+      ${startBtn}
     </div>`;
-  document.getElementById("c4Start").onclick = () => send({ type: "game-action", action: "start" });
+  if (isHost) {
+    document.getElementById("c4Start").onclick = () => send({ type: "game-action", action: "start" });
+  } else {
+    document.getElementById("c4Exit").onclick = () => document.getElementById("backToMenu").click();
+  }
   document.querySelectorAll(".c4-col-btn").forEach(b => b.onclick = () => send({ type: "game-action", action: "drop", data: { col: parseInt(b.dataset.col) } }));
   function onState(s) {
     const board = document.getElementById("c4Board"); board.innerHTML = "";

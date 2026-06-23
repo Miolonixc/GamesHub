@@ -1,5 +1,7 @@
 function create_pong(opts) {
-  const { container, send, myName, opponentName } = opts;
+  const { container, send, myName, opponentName, isHost } = opts;
+  const exitBtn = `<button class="btn secondary" id="pongExit" style="margin-top:12px">Выйти в меню</button>`;
+  const startBtn = `<button class="btn primary" id="pongStart" style="margin-top:12px">Начать игру</button>`;
   container.innerHTML = `
     <div class="pong-wrapper">
       <div class="pong-scores">
@@ -14,7 +16,7 @@ function create_pong(opts) {
         <button class="dpad-btn" data-action="up">↑</button>
         <button class="dpad-btn" data-action="down">↓</button>
       </div>
-      <button class="btn primary" id="pongStart" style="margin-top:12px">Начать игру</button>
+      ${isHost ? startBtn : exitBtn}
     </div>
     <div id="pongOverlay" class="tetris-overlay hidden">
       <div class="tetris-overlay-content">
@@ -25,7 +27,13 @@ function create_pong(opts) {
   const canvas = document.getElementById("pongCanvas"); const ctx = canvas.getContext("2d");
   function resize() { const s = Math.min((window.innerWidth - 40) / 600, (window.innerHeight - 200) / 400, 1); canvas.width = 600 * s; canvas.height = 400 * s; ctx.setTransform(s, 0, 0, s, 0, 0); }
   resize(); window.addEventListener("resize", resize);
-  document.getElementById("pongStart").onclick = () => { send({ type: "game-action", action: "start" }); document.getElementById("pongStart").style.display = "none"; };
+
+  if (isHost) {
+    document.getElementById("pongStart").onclick = () => { send({ type: "game-action", action: "start" }); document.getElementById("pongStart").style.display = "none"; };
+  } else {
+    document.getElementById("pongExit").onclick = () => document.getElementById("backToMenu").click();
+  }
+
   document.querySelectorAll(".pong-controls .dpad-btn").forEach(btn => {
     const a = btn.dataset.action;
     const r = () => { send({ type: "game-action", action: a }); btn._t = setTimeout(r, 16); };
@@ -50,7 +58,13 @@ function create_pong(opts) {
     document.getElementById("pongMyName").textContent = s.myName;
     document.getElementById("pongOppName").textContent = s.opponentName;
   }
-  function onGameOver(msg) { document.getElementById("pongOverlayTitle").textContent = "Игра окончена!"; document.getElementById("pongOverlayMsg").textContent = msg.reason; document.getElementById("pongOverlay").classList.remove("hidden"); document.getElementById("pongStart").style.display = ""; }
+  function onGameOver(msg) {
+    document.getElementById("pongOverlayTitle").textContent = "Игра окончена!";
+    document.getElementById("pongOverlayMsg").textContent = msg.reason;
+    document.getElementById("pongOverlay").classList.remove("hidden");
+    const startBtn = document.getElementById("pongStart");
+    if (startBtn) startBtn.style.display = "";
+  }
   function onOpponentLeft() { document.getElementById("pongOverlayTitle").textContent = "Противник вышел"; document.getElementById("pongOverlayMsg").textContent = ""; document.getElementById("pongOverlay").classList.remove("hidden"); }
   function destroy() { document.removeEventListener("keydown", keyHandler); window.removeEventListener("resize", resize); container.innerHTML = ""; }
   return { onState, onGameOver, onOpponentLeft, destroy };

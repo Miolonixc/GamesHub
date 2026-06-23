@@ -1,5 +1,6 @@
 function create_memory(opts) {
-  const { container, send, myName, opponentName } = opts;
+  const { container, send, myName, opponentName, isHost } = opts;
+  const startBtn = isHost ? `<button class="btn primary" id="memStart">Начать игру</button>` : `<button class="btn secondary" id="memExit">Выйти в меню</button>`;
   container.innerHTML = `
     <div class="mem-wrapper">
       <div class="mem-scores">
@@ -9,11 +10,15 @@ function create_memory(opts) {
         <span id="memOppScore">0</span>
         <span class="mem-pname mem-p2">${opponentName}</span>
       </div>
-      <div class="mem-status" id="memStatus">Нажми "Начать"</div>
+      <div class="mem-status" id="memStatus">${isHost ? 'Нажми "Начать"' : 'Ожидание...'}</div>
       <div class="mem-board" id="memBoard"></div>
-      <button class="btn primary" id="memStart">Начать игру</button>
+      ${startBtn}
     </div>`;
-  document.getElementById("memStart").onclick = () => send({ type: "game-action", action: "start" });
+  if (isHost) {
+    document.getElementById("memStart").onclick = () => send({ type: "game-action", action: "start" });
+  } else {
+    document.getElementById("memExit").onclick = () => document.getElementById("backToMenu").click();
+  }
   function onState(s) {
     const board = document.getElementById("memBoard"); board.innerHTML = "";
     s.cards.forEach(c => {
