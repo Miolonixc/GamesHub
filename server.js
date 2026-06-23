@@ -81,7 +81,7 @@ wss.on("connection", (ws) => {
           const game = msg.data?.game;
           if (!game || !gameModules[game]) return;
           room.proposedGame = game;
-          broadcastToRoom(room, { type: "game-proposed", game, proposer: client.name });
+          broadcastToRoom(room, { type: "game-proposed", game, proposer: clients.get(playerId).name });
           return;
         }
 
