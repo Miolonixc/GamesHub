@@ -49,9 +49,7 @@
     if (!name) return alert("Введите имя");
     myName = name;
     isHost = true;
-    connectWS(() => {
-      send({ type: "create-room", name: myName });
-    });
+    connectWS(() => send({ type: "create-room", name: myName }));
   };
 
   // --- Lobby: Join game ---
@@ -62,15 +60,10 @@
     if (!code) return alert("Введите код комнаты");
     myName = name;
     isHost = false;
-    connectWS(() => {
-      send({ type: "join-room", roomId: code, name: myName });
-    });
+    connectWS(() => send({ type: "join-room", roomId: code, name: myName }));
   };
 
-  $("#roomCodeInput").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") $("#joinBtn").click();
-  });
-
+  $("#roomCodeInput").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#joinBtn").click(); });
   $("#playerName").addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       if ($("#roomCodeInput").value.trim()) $("#joinBtn").click();
@@ -78,13 +71,11 @@
     }
   });
 
-  // --- Game Selection (host picks game) ---
+  // --- Game Selection: propose game ---
   document.querySelectorAll(".game-card").forEach(card => {
     card.onclick = () => {
       currentGame = card.dataset.game;
-      showScreen("waiting");
-      $("#waitInfo").textContent = `${getGameName(currentGame)} — ожидание противника...`;
-      send({ type: "game-action", action: "select-game", data: { game: currentGame } });
+      send({ type: "game-action", action: "propose-game", data: { game: currentGame } });
     };
   });
 
@@ -108,14 +99,28 @@
 
       case "room-joined":
         currentRoomId = msg.roomId;
-        showScreen("waiting");
-        $("#waitInfo").textContent = "Ожидание выбора игры хостом...";
+        showScreen("gameSelect");
+        $("#myNameDisplay").textContent = myName;
+        $("#myRoomId").textContent = msg.roomId;
+        break;
+
+      case "player-list":
+        updatePlayerList(msg.players);
+        break;
+
+      case "game-proposed":
+        showProposal(msg.game, msg.proposer);
+        break;
+
+      case "game-declined":
+        hideProposal();
         break;
 
       case "room-ready":
         currentRoomId = msg.roomId;
         currentGame = msg.game;
         opponentName = msg.opponent || "Противник";
+        hideProposal();
         startGame();
         break;
 
@@ -136,12 +141,9 @@
         if (gameInstance && gameInstance.destroy) gameInstance.destroy();
         gameInstance = null;
         currentGame = "";
-        if (isHost) {
-          showScreen("gameSelect");
-        } else {
-          showScreen("waiting");
-          $("#waitInfo").textContent = "Ожидание выбора игры хостом...";
-        }
+        hideProposal();
+        if (isHost) showScreen("gameSelect");
+        else { showScreen("gameSelect"); }
         break;
 
       case "error":
@@ -149,6 +151,45 @@
         showScreen("lobby");
         break;
     }
+  }
+
+  // --- Player list ---
+  function updatePlayerList(players) {
+    const el = $("#onlinePlayers");
+    if (!el) return;
+    el.innerHTML = players.map(n => `<span class="online-dot"></span> ${n}`).join("  ");
+  }
+
+  // --- Game proposal ---
+  function showProposal(game, proposer) {
+    const el = $("#gameProposal");
+    if (!el) return;
+    const isForMe = proposer !== myName;
+    el.innerHTML = `
+      <div class="proposal-card">
+        <p>${proposer} предлагает: <strong>${getGameName(game)}</strong></p>
+        ${isForMe ? `
+          <div class="proposal-btns">
+            <button class="btn primary" id="proposalConfirm">Играть!</button>
+            <button class="btn secondary" id="proposalDecline">Нет</button>
+          </div>
+        ` : `<p class="proposal-wait">Ожидание подтверждения...</p>`}
+      </div>`;
+    el.classList.remove("hidden");
+
+    if (isForMe) {
+      document.getElementById("proposalConfirm").onclick = () => {
+        send({ type: "game-action", action: "confirm-game", data: { game } });
+      };
+      document.getElementById("proposalDecline").onclick = () => {
+        send({ type: "game-action", action: "decline-game" });
+      };
+    }
+  }
+
+  function hideProposal() {
+    const el = $("#gameProposal");
+    if (el) el.classList.add("hidden");
   }
 
   // --- Start Game ---
@@ -189,12 +230,8 @@
     gameInstance = null;
     currentGame = "";
     send({ type: "game-action", action: "back-to-menu" });
-    if (isHost) {
-      showScreen("gameSelect");
-    } else {
-      showScreen("waiting");
-      $("#waitInfo").textContent = "Ожидание выбора игры хостом...";
-    }
+    hideProposal();
+    showScreen("gameSelect");
   };
 
   // --- Auto-join from URL ---

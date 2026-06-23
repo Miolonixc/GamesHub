@@ -132,6 +132,54 @@ input[type="text"]:focus { border-color: var(--primary); }
 .room-id-label { color: var(--text-dim); }
 .room-id-label span { color: var(--accent); font-family: monospace; font-weight: 700; letter-spacing: 2px; }
 
+.online-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+.online-label { color: var(--text-dim); }
+
+.online-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #00b894;
+  border-radius: 50%;
+  margin-right: 4px;
+  animation: pulse 2s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.proposal { margin-top: 20px; width: 100%; max-width: 400px; }
+.proposal.hidden { display: none; }
+
+.proposal-card {
+  background: var(--card);
+  border: 2px solid var(--primary);
+  border-radius: 14px;
+  padding: 20px;
+  text-align: center;
+}
+
+.proposal-card p { margin-bottom: 14px; font-size: 1rem; }
+.proposal-card strong { color: var(--accent); }
+
+.proposal-btns { display: flex; gap: 10px; justify-content: center; }
+.proposal-btns .btn { width: auto; padding: 12px 28px; }
+
+.proposal-wait { color: var(--text-dim); font-size: 0.85rem; margin: 0 !important; }
+
 .hint-text { color: var(--text-dim); font-size: 0.85rem; text-align: center; margin-bottom: 16px; }
 
 /* Game selection */

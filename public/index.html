@@ -24,7 +24,7 @@
     </div>
   </div>
 
-  <!-- Game Selection Screen (host only) -->
+  <!-- Game Selection Screen -->
   <div id="gameSelect" class="screen">
     <div class="top-bar">
       <div class="player-info">
@@ -32,8 +32,11 @@
         <span class="room-id-label">Код: <span id="myRoomId"></span></span>
       </div>
     </div>
+    <div class="online-bar">
+      <span class="online-label">В лобби:</span>
+      <span id="onlinePlayers"></span>
+    </div>
     <h2>Выберите игру</h2>
-    <p class="hint-text">Отправь код другу — он введёт его и войдёт</p>
     <div class="games-grid">
       <div class="game-card" data-game="tetris">
         <div class="game-icon">🎮</div>
@@ -61,6 +64,7 @@
         <p>Найди все пары</p>
       </div>
     </div>
+    <div id="gameProposal" class="proposal hidden"></div>
   </div>
 
   <!-- Waiting for opponent -->

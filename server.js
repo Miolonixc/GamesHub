@@ -69,6 +69,7 @@ wss.on("connection", (ws) => {
         clients.get(playerId).roomId = roomId;
         clients.get(playerId).name = msg.name;
         ws.send(JSON.stringify({ type: "room-joined", roomId }));
+        broadcastPlayerList(room);
         break;
       }
 
@@ -76,11 +77,19 @@ wss.on("connection", (ws) => {
         const room = roomManager.getRoom(playerId);
         if (!room) return;
 
-        if (msg.action === "select-game") {
+        if (msg.action === "propose-game") {
           const game = msg.data?.game;
           if (!game || !gameModules[game]) return;
-          room.game = game;
+          room.proposedGame = game;
+          broadcastToRoom(room, { type: "game-proposed", game, proposer: client.name });
+          return;
+        }
 
+        if (msg.action === "confirm-game") {
+          const game = msg.data?.game || room.proposedGame;
+          if (!game || !gameModules[game]) return;
+          room.game = game;
+          room.proposedGame = null;
           room.players.forEach(p => {
             const c = clients.get(p.id);
             if (c && c.ws.readyState === 1) {
@@ -93,6 +102,12 @@ wss.on("connection", (ws) => {
               }));
             }
           });
+          return;
+        }
+
+        if (msg.action === "decline-game") {
+          room.proposedGame = null;
+          broadcastToRoom(room, { type: "game-declined" });
           return;
         }
 
@@ -138,6 +153,7 @@ wss.on("connection", (ws) => {
           const gameModule = gameModules[room.game];
           if (gameModule && gameModule.cleanup) gameModule.cleanup(room);
         }
+        broadcastPlayerList(room);
       }
     }
     clients.delete(playerId);
@@ -150,6 +166,11 @@ function broadcastToRoom(room, msg) {
     const c = clients.get(p.id);
     if (c && c.ws.readyState === 1) c.ws.send(data);
   });
+}
+
+function broadcastPlayerList(room) {
+  const players = room.players.map(p => p.name);
+  broadcastToRoom(room, { type: "player-list", players });
 }
 
 setInterval(() => roomManager.cleanup(), 60000);
