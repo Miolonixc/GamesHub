@@ -1,0 +1,16 @@
+{
+  "name": "game-hub",
+  "version": "1.0.0",
+  "description": "Browser game hub for two players",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["games", "multiplayer", "browser", "websocket"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

@@ -1,0 +1,398 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #0a0a1a;
+  --card: #12122a;
+  --card-hover: #1a1a3a;
+  --primary: #6c5ce7;
+  --primary-hover: #7c6cf7;
+  --accent: #00cec9;
+  --text: #dfe6e9;
+  --text-dim: #636e72;
+  --border: #2d2d5a;
+  --danger: #d63031;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.screen {
+  display: none;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.screen.active {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Lobby */
+.lobby-card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 40px 30px;
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  margin-top: 15vh;
+  border: 1px solid var(--border);
+}
+
+.lobby-card h1 {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+  color: var(--text-dim);
+  margin-bottom: 30px;
+}
+
+.name-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+input[type="text"] {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  color: var(--text);
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+input[type="text"]:focus {
+  border-color: var(--primary);
+}
+
+.btn {
+  border: none;
+  border-radius: 10px;
+  padding: 14px 28px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 600;
+}
+
+.btn.primary {
+  background: var(--primary);
+  color: white;
+  width: 100%;
+}
+
+.btn.primary:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.btn.secondary {
+  background: var(--border);
+  color: var(--text);
+}
+
+.btn.secondary:hover {
+  background: #3d3d6a;
+}
+
+.btn.small {
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  background: var(--primary);
+  color: white;
+  border-radius: 8px;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.btn-icon:hover {
+  color: var(--text);
+}
+
+/* Top bar */
+.top-bar {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  margin-bottom: 10px;
+}
+
+.player-names {
+  font-size: 0.9rem;
+  color: var(--accent);
+}
+
+/* Game selection */
+#gameSelect h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 1.4rem;
+}
+
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  max-width: 800px;
+  width: 100%;
+}
+
+.game-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.game-card:hover {
+  background: var(--card-hover);
+  border-color: var(--primary);
+  transform: translateY(-3px);
+}
+
+.game-icon {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.game-card h3 {
+  font-size: 1rem;
+  margin-bottom: 6px;
+}
+
+.game-card p {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 30px;
+  text-align: center;
+  max-width: 360px;
+  width: 90%;
+  border: 1px solid var(--border);
+}
+
+.room-code {
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: 6px;
+  color: var(--accent);
+  margin: 20px 0;
+  font-family: monospace;
+  user-select: all;
+}
+
+.hint {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  margin-bottom: 20px;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 16px auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Waiting */
+.waiting-card {
+  text-align: center;
+  margin-top: 20vh;
+}
+
+.waiting-card h2 {
+  margin-top: 20px;
+  font-size: 1.3rem;
+}
+
+.waiting-card p {
+  color: var(--text-dim);
+  margin: 10px 0 20px;
+}
+
+/* Game header */
+.game-header {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  margin-bottom: 10px;
+}
+
+#gameTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+#gameContainer {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 800px;
+}
+
+/* Chat Widget */
+#chatWidget {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  z-index: 50;
+}
+
+.chat-toggle {
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 18px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(108,92,231,0.4);
+}
+
+.chat-toggle:hover {
+  background: var(--primary-hover);
+}
+
+.chat-panel {
+  position: absolute;
+  bottom: 50px;
+  left: 0;
+  width: 280px;
+  max-height: 350px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-panel.hidden {
+  display: none;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  max-height: 260px;
+  font-size: 0.82rem;
+}
+
+.chat-msg {
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+
+.chat-msg .name {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.chat-msg.system {
+  color: var(--text-dim);
+  font-style: italic;
+  font-size: 0.78rem;
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.chat-input-row input {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  border-radius: 8px;
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+  .lobby-card {
+    margin-top: 10vh;
+    padding: 30px 20px;
+  }
+
+  .games-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .game-card {
+    padding: 18px 10px;
+  }
+
+  .game-icon {
+    font-size: 2rem;
+  }
+
+  .chat-panel {
+    width: 240px;
+  }
+}
