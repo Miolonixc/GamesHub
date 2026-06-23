@@ -1,0 +1,15 @@
+.ttt-wrapper { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 20px; }
+.ttt-scores { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
+.ttt-pname { font-weight: 600; }
+.ttt-x { color: #6c5ce7; }
+.ttt-o { color: #00cec9; }
+.ttt-dash { color: #636e72; }
+.ttt-draws { color: #636e72; }
+.ttt-status { font-size: 1rem; font-weight: 600; color: #dfe6e9; min-height: 24px; }
+.ttt-board { display: grid; grid-template-columns: repeat(3, 100px); grid-template-rows: repeat(3, 100px); gap: 6px; }
+.ttt-cell { background: #12122a; border: 2px solid #2d2d5a; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 700; cursor: pointer; transition: all 0.2s; user-select: none; }
+.ttt-cell.ttt-avail:hover { background: #1a1a3a; border-color: #6c5ce7; }
+.ttt-cell.ttt-x { color: #6c5ce7; }
+.ttt-cell.ttt-o { color: #00cec9; }
+.ttt-cell.ttt-win { background: #1a1a3a; border-color: #fdcb6e; box-shadow: 0 0 12px rgba(253,203,110,0.3); }
+@media (max-width: 500px) { .ttt-board { grid-template-columns: repeat(3, 80px); grid-template-rows: repeat(3, 80px); gap: 4px; } .ttt-cell { font-size: 2rem; } }
