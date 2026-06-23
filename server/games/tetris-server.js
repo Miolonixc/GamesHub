@@ -272,7 +272,10 @@ function handleAction(room, playerId, action, data) {
   if (action === "set-mode") {
     const mode = data?.mode || "battle";
     if (mode === "coop") initCoop(room); else initBattle(room);
-    startTicking(room);
+    if (room.readyPlayers && room.readyPlayers.size >= room.players.length) {
+      room.readyPlayers = null;
+      startTicking(room);
+    }
     broadcastState(room);
     return null;
   }

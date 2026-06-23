@@ -197,6 +197,7 @@
     showScreen("gameScreen");
     $("#gameTitle").textContent = getGameName(currentGame);
     $("#gameContainer").innerHTML = "";
+    gameInstance = null;
 
     const cssId = `css-${currentGame}`;
     if (!document.getElementById(cssId)) {
@@ -219,6 +220,7 @@
           opponentName,
           isHost
         });
+        send({ type: "game-action", action: "game-ready" });
       }
     };
     document.body.appendChild(script);

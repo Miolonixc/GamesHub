@@ -111,6 +111,19 @@ wss.on("connection", (ws) => {
           return;
         }
 
+        if (msg.action === "game-ready") {
+          if (!room.readyPlayers) room.readyPlayers = new Set();
+          room.readyPlayers.add(playerId);
+          if (room.readyPlayers.size >= room.players.length && room.game) {
+            room.readyPlayers = null;
+            const gameModule = gameModules[room.game];
+            if (gameModule && gameModule.startTicking && room.state) {
+              gameModule.startTicking(room);
+            }
+          }
+          return;
+        }
+
         if (msg.action === "back-to-menu") {
           if (room.game) {
             const gameModule = gameModules[room.game];
