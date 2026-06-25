@@ -1,5 +1,7 @@
 (() => {
   const $ = (s) => document.querySelector(s);
+  // экранирование пользовательских строк (имена) перед вставкой в innerHTML
+  const esc = (s) => { const d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; };
   const screens = {
     lobby: $("#lobby"),
     gameSelect: $("#gameSelect"),
@@ -214,7 +216,7 @@
   function updatePlayerList(players) {
     const el = $("#onlinePlayers");
     if (!el) return;
-    el.innerHTML = players.map(n => `<span class="online-dot"></span> ${n}`).join("  ");
+    el.innerHTML = players.map(n => `<span class="online-dot"></span> ${esc(n)}`).join("  ");
   }
 
   // --- Scoreboard ---
@@ -225,7 +227,7 @@
     if (entries.length === 0) { el.classList.add("hidden"); return; }
     el.classList.remove("hidden");
     el.innerHTML = entries.map(([name, s]) =>
-      `<div class="score-row"><span class="score-name">${name}</span><span class="score-stats">${s.wins}W ${s.losses}L ${s.draws}D</span></div>`
+      `<div class="score-row"><span class="score-name">${esc(name)}</span><span class="score-stats">${s.wins}W ${s.losses}L ${s.draws}D</span></div>`
     ).join("");
   }
 
@@ -236,7 +238,7 @@
     const isForMe = proposer !== myName;
     el.innerHTML = `
       <div class="proposal-card">
-        <p>${proposer} предлагает: <strong>${getGameName(game)}</strong></p>
+        <p>${esc(proposer)} предлагает: <strong>${getGameName(game)}</strong></p>
         ${isForMe ? `
           <div class="proposal-btns">
             <button class="btn primary" id="proposalConfirm">Играть!</button>

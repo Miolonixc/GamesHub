@@ -5,13 +5,19 @@ const { WebSocketServer } = require("ws");
 const RoomManager = require("./server/room-manager");
 
 const PORT = 3000;
+const PUBLIC = path.join(__dirname, "public");
 const MIME = {
   ".html": "text/html", ".css": "text/css", ".js": "application/javascript",
   ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml"
 };
 
 const server = http.createServer((req, res) => {
-  let filePath = path.join(__dirname, "public", req.url === "/" ? "index.html" : req.url.split("?")[0]);
+  const urlPath = req.url === "/" ? "/index.html" : req.url.split("?")[0];
+  const filePath = path.join(PUBLIC, urlPath);
+  // защита от обхода каталога (../): итоговый путь обязан быть внутри public/
+  if (filePath !== PUBLIC && !filePath.startsWith(PUBLIC + path.sep)) {
+    res.writeHead(403); res.end("Forbidden"); return;
+  }
   const ext = path.extname(filePath);
   fs.readFile(filePath, (err, data) => {
     if (err) { res.writeHead(404); res.end("Not found"); return; }
@@ -20,9 +26,16 @@ const server = http.createServer((req, res) => {
   });
 });
 
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ server, maxPayload: 64 * 1024 }); // игровые сообщения крошечные
 const roomManager = new RoomManager();
 const clients = new Map();
+
+// чистим имя игрока: убираем управляющие символы и угловые скобки (анти-XSS:
+// имена вставляются в innerHTML в хабе и в каждой игре), режем длину
+function cleanName(n) {
+  const s = (typeof n === "string" ? n : "").replace(/[\x00-\x1f\x7f<>]/g, "").trim().slice(0, 20);
+  return s || "Игрок";
+}
 
 const gameModules = {};
 try { gameModules.tetris = require("./server/games/tetris-server"); } catch(e) {}
@@ -40,21 +53,26 @@ wss.on("connection", (ws) => {
   ws.on("message", (raw) => {
     let msg;
     try { msg = JSON.parse(raw); } catch { return; }
+    if (!msg || typeof msg.type !== "string") return;
 
+    try {
     switch (msg.type) {
       case "create-room": {
+        const name = cleanName(msg.name);
         const room = roomManager.createRoom(null);
         room.hostId = playerId;
-        const result = roomManager.joinRoom(room.id, { id: playerId, name: msg.name, _ws: ws });
+        roomManager.joinRoom(room.id, { id: playerId, name, _ws: ws });
         clients.get(playerId).roomId = room.id;
-        clients.get(playerId).name = msg.name;
+        clients.get(playerId).name = name;
         ws.send(JSON.stringify({ type: "room-created", roomId: room.id }));
         ws.send(JSON.stringify({ type: "scoreboard", score: room.score }));
         break;
       }
 
       case "join-room": {
+        if (typeof msg.roomId !== "string") return;
         const roomId = msg.roomId.toUpperCase();
+        const name = cleanName(msg.name);
         const room = roomManager.getRoomById(roomId);
         if (!room) {
           ws.send(JSON.stringify({ type: "error", message: "Комната не найдена" }));
@@ -64,13 +82,13 @@ wss.on("connection", (ws) => {
           ws.send(JSON.stringify({ type: "error", message: "Комната заполнена" }));
           return;
         }
-        const result = roomManager.joinRoom(roomId, { id: playerId, name: msg.name, _ws: ws });
+        const result = roomManager.joinRoom(roomId, { id: playerId, name, _ws: ws });
         if (result.error) {
           ws.send(JSON.stringify({ type: "error", message: result.error }));
           return;
         }
         clients.get(playerId).roomId = roomId;
-        clients.get(playerId).name = msg.name;
+        clients.get(playerId).name = name;
         ws.send(JSON.stringify({ type: "room-joined", roomId }));
         ws.send(JSON.stringify({ type: "scoreboard", score: room.score }));
         broadcastPlayerList(room);
@@ -172,10 +190,13 @@ wss.on("connection", (ws) => {
         const room = roomManager.getRoom(playerId);
         if (!room) return;
         const name = clients.get(playerId)?.name || "Unknown";
-        broadcastToRoom(room, { type: "chat", name, text: msg.text.substring(0, 200) });
+        const text = (typeof msg.text === "string" ? msg.text : "").replace(/[\x00-\x1f\x7f]/g, "").slice(0, 200);
+        if (!text) return;
+        broadcastToRoom(room, { type: "chat", name, text });
         break;
       }
     }
+    } catch (e) { /* кривое сообщение не должно ронять весь сервер */ }
   });
 
   ws.on("close", () => {
