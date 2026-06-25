@@ -20,7 +20,7 @@ function checkWin(board) {
 
 function handleTTT(room, pid, action, data) {
   if (!room.state || room.state.gameOver || room.state.players[room.state.currentTurn] !== pid || action !== "move") return null;
-  const cell = data?.cell; if (cell < 0 || cell > 8 || room.state.board[cell]) return null;
+  const cell = data?.cell; if (!Number.isInteger(cell) || cell < 0 || cell > 8 || room.state.board[cell]) return null;
   room.state.board[cell] = room.state.marks[pid];
   const r = checkWin(room.state.board);
   if (r) {

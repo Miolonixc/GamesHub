@@ -23,7 +23,7 @@ function checkWin(board) {
 
 function handleC4(room, pid, action, data) {
   if (!room.state || room.state.gameOver || room.state.players[room.state.currentTurn] !== pid || action !== "drop") return null;
-  const col = data?.col; if (col < 0 || col >= COLS) return null;
+  const col = data?.col; if (!Number.isInteger(col) || col < 0 || col >= COLS) return null;
   let row = -1; for (let r = ROWS - 1; r >= 0; r--) { if (room.state.board[r][col] === 0) { row = r; break; } }
   if (row === -1) return null;
   room.state.board[row][col] = room.state.discs[pid];

@@ -4,7 +4,7 @@ const path = require("path");
 const { WebSocketServer } = require("ws");
 const RoomManager = require("./server/room-manager");
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const PUBLIC = path.join(__dirname, "public");
 const MIME = {
   ".html": "text/html", ".css": "text/css", ".js": "application/javascript",
@@ -37,6 +37,12 @@ function cleanName(n) {
   return s || "Игрок";
 }
 
+// анти-абуз: лимит соединений на IP, частоты сообщений и чата
+const MAX_CONN_PER_IP = Number(process.env.MAX_CONN_PER_IP) || 16;
+const MSG_PER_SEC = 60;
+const CHAT_INTERVAL_MS = 600;
+const ipConns = new Map();
+
 const gameModules = {};
 try { gameModules.tetris = require("./server/games/tetris-server"); } catch(e) {}
 try { gameModules.pong = require("./server/games/pong-server"); } catch(e) {}
@@ -46,11 +52,21 @@ try { gameModules.memory = require("./server/games/memory-server"); } catch(e) {
 try { gameModules.seabattle = require("./server/games/seabattle-server"); } catch(e) {}
 try { gameModules.checkers = require("./server/games/checkers-server"); } catch(e) {}
 
-wss.on("connection", (ws) => {
+wss.on("connection", (ws, req) => {
+  const ip = (req && req.socket && req.socket.remoteAddress) || "?";
+  const cur = ipConns.get(ip) || 0;
+  if (cur >= MAX_CONN_PER_IP) { try { ws.close(1008, "too many connections"); } catch (e) {} return; }
+  ipConns.set(ip, cur + 1);
+
   const playerId = Math.random().toString(36).substring(2, 10);
   clients.set(playerId, { ws, name: null, roomId: null });
+  let winStart = 0, msgCount = 0, lastChat = 0;
 
   ws.on("message", (raw) => {
+    const now = Date.now();
+    if (now - winStart >= 1000) { winStart = now; msgCount = 0; }
+    if (++msgCount > MSG_PER_SEC) return; // флуд сообщениями — игнорируем
+
     let msg;
     try { msg = JSON.parse(raw); } catch { return; }
     if (!msg || typeof msg.type !== "string") return;
@@ -187,11 +203,13 @@ wss.on("connection", (ws) => {
       }
 
       case "chat": {
+        if (now - lastChat < CHAT_INTERVAL_MS) return; // антиспам чата
         const room = roomManager.getRoom(playerId);
         if (!room) return;
         const name = clients.get(playerId)?.name || "Unknown";
         const text = (typeof msg.text === "string" ? msg.text : "").replace(/[\x00-\x1f\x7f]/g, "").slice(0, 200);
         if (!text) return;
+        lastChat = now;
         broadcastToRoom(room, { type: "chat", name, text });
         break;
       }
@@ -200,6 +218,8 @@ wss.on("connection", (ws) => {
   });
 
   ws.on("close", () => {
+    const left = (ipConns.get(ip) || 1) - 1;
+    if (left <= 0) ipConns.delete(ip); else ipConns.set(ip, left);
     const client = clients.get(playerId);
     if (client && client.roomId) {
       const room = roomManager.getRoomById(client.roomId);
