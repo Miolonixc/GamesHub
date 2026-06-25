@@ -119,7 +119,13 @@ wss.on("connection", (ws, req) => {
         if (msg.action === "propose-game") {
           const game = msg.data?.game;
           if (!game || !gameModules[game]) return;
+          // если соперник уже предложил эту же игру — это согласие, сразу стартуем
+          if (room.proposedGame === game && room.proposedBy && room.proposedBy !== playerId) {
+            startProposedGame(room, game);
+            return;
+          }
           room.proposedGame = game;
+          room.proposedBy = playerId;
           broadcastToRoom(room, { type: "game-proposed", game, proposer: clients.get(playerId).name });
           return;
         }
@@ -127,29 +133,13 @@ wss.on("connection", (ws, req) => {
         if (msg.action === "confirm-game") {
           const game = msg.data?.game || room.proposedGame;
           if (!game || !gameModules[game]) return;
-          room.game = game;
-          room.proposedGame = null;
-          const gameModule = gameModules[game];
-          if (gameModule && gameModule.init) {
-            room.state = gameModule.init(room);
-          }
-          room.players.forEach(p => {
-            const c = clients.get(p.id);
-            if (c && c.ws.readyState === 1) {
-              const opponent = room.players.find(op => op.id !== p.id);
-              c.ws.send(JSON.stringify({
-                type: "room-ready",
-                roomId: room.id,
-                game: room.game,
-                opponent: opponent ? opponent.name : null
-              }));
-            }
-          });
+          startProposedGame(room, game);
           return;
         }
 
         if (msg.action === "decline-game") {
           room.proposedGame = null;
+          room.proposedBy = null;
           broadcastToRoom(room, { type: "game-declined" });
           return;
         }
@@ -265,6 +255,27 @@ function broadcastToRoom(room, msg) {
 function broadcastPlayerList(room) {
   const players = room.players.map(p => p.name);
   broadcastToRoom(room, { type: "player-list", players });
+}
+
+// старт согласованной игры: инициализация + room-ready обоим
+function startProposedGame(room, game) {
+  room.game = game;
+  room.proposedGame = null;
+  room.proposedBy = null;
+  const gameModule = gameModules[game];
+  if (gameModule && gameModule.init) room.state = gameModule.init(room);
+  room.players.forEach(p => {
+    const c = clients.get(p.id);
+    if (c && c.ws.readyState === 1) {
+      const opponent = room.players.find(op => op.id !== p.id);
+      c.ws.send(JSON.stringify({
+        type: "room-ready",
+        roomId: room.id,
+        game,
+        opponent: opponent ? opponent.name : null
+      }));
+    }
+  });
 }
 
 setInterval(() => roomManager.cleanup(), 60000);
