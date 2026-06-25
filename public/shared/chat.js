@@ -2,8 +2,10 @@ const chat = {
   panel: null,
   messages: null,
   input: null,
+  toggle: null,
   ws: null,
   maxMessages: 50,
+  unread: 0,
 
   init(ws) {
     this.ws = ws;
@@ -11,8 +13,10 @@ const chat = {
     this.messages = document.getElementById("chatMessages");
     this.input = document.getElementById("chatInput");
 
-    document.getElementById("chatToggle").onclick = () => {
+    this.toggle = document.getElementById("chatToggle");
+    this.toggle.onclick = () => {
       this.panel.classList.toggle("hidden");
+      if (!this.panel.classList.contains("hidden")) this.clearUnread();
     };
 
     document.getElementById("chatSend").onclick = () => this.send();
@@ -42,6 +46,20 @@ const chat = {
       ? (this.messages.removeChild(this.messages.firstChild), div)
       : div);
     this.messages.scrollTop = this.messages.scrollHeight;
+    // если панель свёрнута — подсветим кнопку счётчиком непрочитанных
+    if (this.panel.classList.contains("hidden")) this.bumpUnread();
+  },
+
+  bumpUnread() {
+    this.unread++;
+    this.toggle.dataset.count = this.unread > 99 ? "99+" : String(this.unread);
+    this.toggle.classList.add("has-unread");
+  },
+
+  clearUnread() {
+    this.unread = 0;
+    this.toggle.classList.remove("has-unread");
+    delete this.toggle.dataset.count;
   },
 
   addSystem(text) {
