@@ -164,6 +164,10 @@
         updatePlayerList(msg.players);
         break;
 
+      case "chat":
+        chat.addMessage(msg.name, msg.text);
+        break;
+
       case "scoreboard":
         updateScoreboard(msg.score);
         break;

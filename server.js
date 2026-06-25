@@ -82,6 +82,7 @@ wss.on("connection", (ws, req) => {
         clients.get(playerId).name = name;
         ws.send(JSON.stringify({ type: "room-created", roomId: room.id }));
         ws.send(JSON.stringify({ type: "scoreboard", score: room.score }));
+        broadcastPlayerList(room); // чтобы хост сразу видел себя в списке «В лобби»
         break;
       }
 
@@ -211,6 +212,21 @@ wss.on("connection", (ws, req) => {
         if (!text) return;
         lastChat = now;
         broadcastToRoom(room, { type: "chat", name, text });
+        break;
+      }
+
+      case "leave-room": {
+        const client = clients.get(playerId);
+        if (client && client.roomId) {
+          const room = roomManager.getRoomById(client.roomId);
+          roomManager.leaveRoom(playerId);
+          client.roomId = null;
+          if (room && room.players.length > 0) {
+            broadcastToRoom(room, { type: "opponent-left", name: client.name });
+            if (room.game) { const gm = gameModules[room.game]; if (gm && gm.cleanup) gm.cleanup(room); }
+            broadcastPlayerList(room);
+          }
+        }
         break;
       }
     }
